@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 copyright = "2014-2024, APS"
 
 [project]
-name = "instrument"
+name = "tomo_instrument"
 dynamic = ["version"]
 description = "Model of a Bluesky Data Acquisition Instrument in console, notebook, & queueserver."
 authors = [
@@ -72,8 +72,8 @@ doc = [
 all = ["instrument[dev,doc]"]
 
 [project.urls]
-"Homepage" = "https://BCDA-APS.github.io/bs_model_instrument/"
-"Bug Tracker" = "https://github.com/BCDA-APS/bs_model_instrument/issues"
+"Homepage" = "https://BCDA-APS.github.io/tomo-bits/"
+"Bug Tracker" = "https://github.com/BCDA-APS/tomo-bits/issues"
 
 # [project.scripts]
 # instrument = "instrument.app:main"
@@ -219,7 +219,7 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.setuptools]
-package-dir = {"instrument" = "src/instrument"}
+package-dir = {"tomo_instrument" = "src/instrument"}
 
 [tool.setuptools.package-data]
 "*" = ["*.yml"]
