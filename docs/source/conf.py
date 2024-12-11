@@ -6,12 +6,12 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-import instrument
+import tomo_instrument
 
-project = "instrument"
+project = "tomo_instrument"
 copyright = "2023-2024, APS BCDA"
 author = "APS BCDA"
-version = instrument.__version__
+version = tomo_instrument.__version__
 release = version.split("+")[0]
 if "+" in version:
     release += "..."
