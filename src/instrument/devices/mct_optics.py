@@ -1,3 +1,7 @@
+# Lens name is read/write
+# Name of the camera
+# 
+
 import json
 import time
 from pathlib import Path
@@ -161,7 +165,7 @@ class MCTOptics:
         Dictionary of pv variables.
     """
 
-    def __init__(self, pv_files, macros):
+    def __init__(self, pv_files, macros): #Where these come from: start_mctoptics.py
         # init pvs
         self.config_pvs = {}
         self.control_pvs = {}
@@ -538,7 +542,8 @@ class MCTOptics:
             self.epics_pvs["LensSelect"].put(self.lens_cur)
             return
 
-        # Store the current camera rotation position for the current lens in the corresponding CameraXLenxYRotation PV
+        # Store the current camera rotation position for the current lens in the
+        # corresponding CameraXLenxYRotation PV
         rotation_cur = self.control_pvs[
             "Camera" + str(self.camera_cur) + "RotationPosition"
         ].get()
