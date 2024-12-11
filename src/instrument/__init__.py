@@ -6,7 +6,7 @@ from .utils.logging_setup import configure_logging
 
 configure_logging()
 
-__package__ = "instrument"
+__package__ = "tomo_instrument"
 try:
     from setuptools_scm import get_version
 
