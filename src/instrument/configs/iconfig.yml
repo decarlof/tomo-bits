@@ -28,18 +28,18 @@ RUN_ENGINE:
     ### The progress bar is nice to see,
     ### except when it clutters the output in Jupyter notebooks.
     ### Default: True
-    USE_PROGRESS_BAR: false
+    USE_PROGRESS_BAR: True
 
 # Command-line tools, such as %wa, %ct, ...
 USE_BLUESKY_MAGICS: True
 
 ### Best Effort Callback Configurations
 ### Defaults: all true (except no plots in queueserver)
-# BEC:
-#     BASELINE: false
-#     HEADING: false
-#     PLOTS: false
-#     TABLE: false
+BEC:
+    BASELINE: True
+    HEADING: True
+    PLOTS: True
+    TABLE: True
 
 AREA_DETECTOR:
     ### General configuration for area detectors.
