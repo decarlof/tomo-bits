@@ -6,6 +6,8 @@ from pathlib import Path
 from ophyd import Component as Cpt
 from ophyd import Device
 from ophyd import EpicsSignal
+from ophyd import EpicsSignalRO
+
 
 EPSILON = 0.1
 data_path = Path(__file__).parent / "data"
@@ -19,10 +21,12 @@ class MCTOptics(Device):
     # Configurable PVs
     lens_select = Cpt(EpicsSignal, "LensSelect") # Use numbers 0-2
     camera_select = Cpt(EpicsSignal, "CameraSelect") # Use number 0-1
+    camera_selected = Cpt(EpicsSignalRO, "CameraSelected", string="true") # Use number 0-1
+
     cross_select = Cpt(EpicsSignal, "CrossSelect")
-    sync = Cpt(EpicsSignal, "Sync")
-    cut = Cpt(EpicsSignal, "Cut")
-    mct_status = Cpt(EpicsSignal, "MCTStatus")
+    sync = Cpt(EpicsSignal, "Sync", string="true")
+    cut = Cpt(EpicsSignal, "Cut", string="true")
+    mct_status = Cpt(EpicsSignal, "MCTStatus", string="true")
 
     # Camera PVs
     # cam0_acquire_time = Cpt(EpicsSignal, "Cam0:AcquireTime")
