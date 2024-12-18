@@ -1,17 +1,24 @@
+"""
+Ophyd device class and instatiation
+"""
+
 from ophyd import Component as Cpt
 from ophyd import Device
 from ophyd import EpicsSignal
 from ophyd import EpicsSignalRO
 
+
 class MCTOptics(Device):
     """
-    Ophyd Device for controlling MCT optics via EPICS.
+    Ophyd Device Class for controlling MCT optics via EPICS.
     """
 
     # Configurable PVs
     lens_select = Cpt(EpicsSignal, "LensSelect")  # Use numbers 0-2
     camera_select = Cpt(EpicsSignal, "CameraSelect")  # Use number 0-1
-    camera_selected = Cpt(EpicsSignalRO, "CameraSelected", string="true")  # Use number 0-1
+    camera_selected = Cpt(
+        EpicsSignalRO, "CameraSelected", string="true"
+    )  # Use number 0-1
 
     cross_select = Cpt(EpicsSignal, "CrossSelect")
     sync = Cpt(EpicsSignal, "Sync", string="true")
@@ -75,6 +82,7 @@ class MCTOptics(Device):
     # Camera Names
     camera_0_name = Cpt(EpicsSignal, "Camera0Name")
     camera_1_name = Cpt(EpicsSignal, "Camera1Name")
+
 
 # Example initialization
 optics = MCTOptics("2bm:MCTOptics:", name="optics")
