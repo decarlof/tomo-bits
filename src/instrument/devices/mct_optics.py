@@ -18,7 +18,7 @@ class MCTOptics(Device):
     camera_select = Cpt(EpicsSignal, "CameraSelect")  # Use number 0-1
     camera_selected = Cpt(
         EpicsSignalRO, "CameraSelected", string="true"
-    )  # Use number 0-1
+    )
 
     cross_select = Cpt(EpicsSignal, "CrossSelect")
     sync = Cpt(EpicsSignal, "Sync", string="true")
