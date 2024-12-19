@@ -69,7 +69,7 @@ class MCTOpticsCameraControl(Device):
     rotation_name = Cpt(EpicsSignal, "RotationPVName")
 
     # Lens Control
-    lens = Cpt(MCTOpticsLensControl, "Lens")
+    lens_ctrl = Cpt(MCTOpticsLensControl, "Lens")
 
 
 class MCTOptics(Device):
