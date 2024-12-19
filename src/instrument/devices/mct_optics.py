@@ -1,5 +1,5 @@
 """
-Ophyd device class and instatiation
+MCT Optics Ophyd device class and instatiation
 """
 
 from ophyd import Component as Cpt
