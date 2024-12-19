@@ -16,9 +16,7 @@ class MCTOptics(Device):
     # Configurable PVs
     lens_select = Cpt(EpicsSignal, "LensSelect")  # Use numbers 0-2
     camera_select = Cpt(EpicsSignal, "CameraSelect")  # Use number 0-1
-    camera_selected = Cpt(
-        EpicsSignalRO, "CameraSelected", string="true"
-    )
+    camera_selected = Cpt(EpicsSignalRO, "CameraSelected", string="true")
 
     cross_select = Cpt(EpicsSignal, "CrossSelect")
     sync = Cpt(EpicsSignal, "Sync", string="true")
@@ -80,7 +78,6 @@ class MCTOptics(Device):
     # Camera Objectives
     camera_objective = Cpt(EpicsSignal, "CameraObjective")
     camera_tube_length = Cpt(EpicsSignal, "CameraTubeLength")
-
 
 
 # Example initialization
