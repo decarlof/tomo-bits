@@ -61,7 +61,6 @@ class MCTOptics(Device):
     camera_1_lens_pos_2 = Cpt(EpicsSignal, "Camera1LensPos2")
 
     # Camera Lens Offsets
-    #Cannot do get
     camera_0_lens_1_x_offset = Cpt(EpicsSignal, "Camera0Lens1XOffset")
     camera_0_lens_1_y_offset = Cpt(EpicsSignal, "Camera0Lens1YOffset")
     camera_0_lens_1_z_offset = Cpt(EpicsSignal, "Camera0Lens1ZOffset")
