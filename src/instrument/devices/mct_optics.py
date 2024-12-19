@@ -6,6 +6,70 @@ from ophyd import Component as Cpt
 from ophyd import Device
 from ophyd import EpicsSignal
 from ophyd import EpicsSignalRO
+from ophyd import FormattedComponent as FCpt
+
+
+class MCTOpticsLensInfo(Device):
+    # Lens Names
+    name_0 = Cpt(EpicsSignal, "Name0")
+    name_1 = Cpt(EpicsSignal, "Name1")
+    name_2 = Cpt(EpicsSignal, "Name2")
+
+    # Lens Motor PVs
+    motor_name = Cpt(EpicsSignal, "MotorPVName")
+    sample_x_name = Cpt(EpicsSignal, "SampleXPVName")
+    sample_y_name = Cpt(EpicsSignal, "SampleYPVName")
+    sample_z_name = Cpt(EpicsSignal, "SampleZPVName")
+
+    # Lens Focus PVs
+    focus_name_0 = Cpt(EpicsSignal, "0FocusPVName")
+    focus_name_1 = Cpt(EpicsSignal, "1FocusPVName")
+    focus_name_2 = Cpt(EpicsSignal, "2FocusPVName")
+
+class MCTOpticsLensOffset(Device):
+
+    # Lens Offset
+    x_offset = Cpt(EpicsSignal, "XOffset")
+    y_offset = Cpt(EpicsSignal, "YOffset")
+    z_offset = Cpt(EpicsSignal, "ZOffset")
+    rotation = Cpt(EpicsSignal, "Rotation")
+    focus = Cpt(EpicsSignal, "Focus")
+
+class MCTOpticsLensControl(Device):
+
+    # Lens Positions
+    pos_0 = Cpt(EpicsSignal, "Pos0")
+    pos_1 = Cpt(EpicsSignal, "Pos1")
+    pos_2 = Cpt(EpicsSignal, "Pos2")
+    lens_1 = Cpt(MCTOpticsLensOffset, "1")
+    lens_2 = Cpt(MCTOpticsLensOffset, "2")
+
+class MCTOpticsCameraControl(Device):
+
+    def __init__(
+        self,
+        prefix: str,
+        *args,
+        **kwargs,
+    ):
+        # Identify the position where the trailing number starts
+        split_index = len(prefix.rstrip("0123456789"))
+
+        # Separate the base prefix and the trailing number
+        self.base_prefix = prefix[:split_index]
+        self.last_number = prefix[split_index:]
+
+        super().__init__(prefix, *args, **kwargs)
+
+    # Name
+    pos = FCpt(EpicsSignal, "{base_prefix}Pos{last_number}")
+    pv_name = FCpt(EpicsSignal, "{base_prefix}Name{last_number}")
+
+    # Camera Rotation PV Name
+    rotation_name = Cpt(EpicsSignal, "RotationPVName")
+
+    # Lens Control
+    lens = Cpt(MCTOpticsLensControl, "Lens")
 
 
 class MCTOptics(Device):
@@ -15,6 +79,7 @@ class MCTOptics(Device):
 
     # Configurable PVs
     lens_select = Cpt(EpicsSignal, "LensSelect")  # Use numbers 0-2
+
     camera_select = Cpt(EpicsSignal, "CameraSelect")  # Use number 0-1
     camera_selected = Cpt(EpicsSignalRO, "CameraSelected", string="true")
 
@@ -22,50 +87,6 @@ class MCTOptics(Device):
     sync = Cpt(EpicsSignal, "Sync", string="true")
     server_running = Cpt(EpicsSignal, "ServerRunning", string="true")
     mct_status = Cpt(EpicsSignal, "MCTStatus", string="true")
-
-    # Camera Positions and Names
-    camera_pos_0 = Cpt(EpicsSignalRO, "CameraPos0")
-    camera_pos_1 = Cpt(EpicsSignalRO, "CameraPos1")
-    camera_name_0 = Cpt(EpicsSignalRO, "CameraName0")
-    camera_name_1 = Cpt(EpicsSignalRO, "CameraName1")
-
-    # Lens Names
-    lens_name_0 = Cpt(EpicsSignal, "LensName0")  # Lens name is read/write
-    lens_name_1 = Cpt(EpicsSignal, "LensName1")
-    lens_name_2 = Cpt(EpicsSignal, "LensName2")
-
-    # Lens Motor PVs
-    lens_motor_name = Cpt(EpicsSignal, "LensMotorPVName")
-    lens_sample_x_name = Cpt(EpicsSignal, "LensSampleXPVName")
-    lens_sample_y_name = Cpt(EpicsSignal, "LensSampleYPVName")
-    lens_sample_z_name = Cpt(EpicsSignal, "LensSampleZPVName")
-
-    # Lens Focus PVs
-    lens_0_focus_name = Cpt(EpicsSignal, "Lens0FocusPVName")
-    lens_1_focus_name = Cpt(EpicsSignal, "Lens1FocusPVName")
-    lens_2_focus_name = Cpt(EpicsSignal, "Lens2FocusPVName")
-
-    # Camera Rotation
-    camera_0_rotation_name = Cpt(EpicsSignal, "Camera0RotationPVName")
-    camera_1_rotation_name = Cpt(EpicsSignal, "Camera1RotationPVName")
-
-    # Camera Lens Positions
-    camera_0_lens_pos_0 = Cpt(EpicsSignal, "Camera0LensPos0")
-    camera_0_lens_pos_1 = Cpt(EpicsSignal, "Camera0LensPos1")
-    camera_0_lens_pos_2 = Cpt(EpicsSignal, "Camera0LensPos2")
-
-    camera_1_lens_pos_0 = Cpt(EpicsSignal, "Camera1LensPos0")
-    camera_1_lens_pos_1 = Cpt(EpicsSignal, "Camera1LensPos1")
-    camera_1_lens_pos_2 = Cpt(EpicsSignal, "Camera1LensPos2")
-
-    # Camera Lens Offsets
-    camera_0_lens_1_x_offset = Cpt(EpicsSignal, "Camera0Lens1XOffset")
-    camera_0_lens_1_y_offset = Cpt(EpicsSignal, "Camera0Lens1YOffset")
-    camera_0_lens_1_z_offset = Cpt(EpicsSignal, "Camera0Lens1ZOffset")
-
-    camera_1_lens_1_x_offset = Cpt(EpicsSignal, "Camera1Lens1XOffset")
-    camera_1_lens_1_y_offset = Cpt(EpicsSignal, "Camera1Lens1YOffset")
-    camera_1_lens_1_z_offset = Cpt(EpicsSignal, "Camera1Lens1ZOffset")
 
     # Scintillator Information
     scintillator_type = Cpt(EpicsSignal, "ScintillatorType")
@@ -79,6 +100,12 @@ class MCTOptics(Device):
     camera_objective = Cpt(EpicsSignal, "CameraObjective")
     camera_tube_length = Cpt(EpicsSignal, "CameraTubeLength")
 
+    # # Lens Names
+    lens_info = Cpt(MCTOpticsLensInfo, "Lens")
+
+    # Camera Lens Positions, Offsets, & Movement
+    camera_0 = Cpt(MCTOpticsCameraControl, "Camera0")
+    camera_1 = Cpt(MCTOpticsCameraControl, "Camera1")
 
 # Example initialization
 optics = MCTOptics("2bm:MCTOptics:", name="optics")
