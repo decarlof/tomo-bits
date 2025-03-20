@@ -8,6 +8,11 @@ apstools.devices.SimulatedApsPssShutterWithStatus:
 - name: shutter
   labels: ["shutters"]
 
+tomo_instrument.devices.MCTOptics:
+- name: optics
+  labels: ["optics"]
+  prefix: "2bm:MCTOptics:"
+
 # tomo_instrument.devices.tomo_detector:
 
 # AREA_DETECTOR:

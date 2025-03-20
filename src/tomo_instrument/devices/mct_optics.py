@@ -198,4 +198,4 @@ class MCTOptics(Device):
 
 
 # Example initialization
-optics = MCTOptics("2bm:MCTOptics:", name="optics")
+# optics = MCTOptics("2bm:MCTOptics:", name="optics")
