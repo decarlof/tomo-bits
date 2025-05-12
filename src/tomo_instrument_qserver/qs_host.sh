@@ -4,11 +4,8 @@
 # Could be in a screen session or run as a direct process.
 
 SHELL_SCRIPT_NAME=${BASH_SOURCE:-${0}}
-SCRIPT_DIR="$( cd -- "$( dirname -- "${SHELL_SCRIPT_NAME}" )" &> /dev/null && pwd )"
-# CONFIGS_DIR="${SCRIPT_DIR}"/../src/instrument/configs
-command="import pathlib, instrument;"
-command+="print(pathlib.Path(instrument.__file__).parent / 'configs')"
-CONFIGS_DIR=$(python -c "${command}")
+SCRIPT_DIR="$(dirname $(readlink -f  "${SHELL_SCRIPT_NAME}"))"
+CONFIGS_DIR=$(readlink -f "${SCRIPT_DIR}/../tomo_instrument/configs")
 
 ###-----------------------------
 ### Change program defaults here
@@ -18,7 +15,8 @@ ICONFIG_YML="${CONFIGS_DIR}"/iconfig.yml
 
 # Bluesky queueserver configuration YAML file.
 # This file contains the definition of 'redis_addr'.  (default: localhost:6379)
-QS_CONFIG_YML="${SCRIPT_DIR}/qs-config.yml"
+# "export" is for BITS to identify when QS is running.
+export QS_CONFIG_YML="${SCRIPT_DIR}/qs-config.yml"
 
 # Host name (from $hostname) where the queueserver host process runs.
 # QS_HOSTNAME=amber.xray.aps.anl.gov  # if a specific host is required
@@ -145,6 +143,7 @@ function exit_if_running() {
 
 function restart() {
     stop
+    sleep 0.1  # empirical, 0.01 is too short, 1.0 is plenty.
     start
 }
 
@@ -229,6 +228,6 @@ esac
 
 # -----------------------------------------------------------------------------
 # :author:    BCDA
-# :copyright: (c) 2017-2024, UChicago Argonne, LLC
+# :copyright: (c) 2017-2025, UChicago Argonne, LLC
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------

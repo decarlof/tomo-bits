@@ -8,20 +8,12 @@ apstools.devices.SimulatedApsPssShutterWithStatus:
 - name: shutter
   labels: ["shutters"]
 
-tomo_instrument.devices.MCTOptics:
+tomo_instrument.devices.mct_optics.MCTOptics:
 - name: optics
   labels: ["optics"]
   prefix: "2bm:MCTOptics:"
 
-# tomo_instrument.devices.tomo_detector:
-
-# AREA_DETECTOR:
-#     ### General configuration for area detectors.
-#     ALLOW_PLUGIN_WARMUP: true
-#     BLUESKY_FILES_ROOT: &BLUESKY_DATA_ROOT "/path/to/data/"
-#     IMAGE_DIR: "sub/directory/path"
-#     HDF5_FILE_TEMPLATE: "%s%s_%6.6d.h5"
-#     ### Add configuration for specific detecto
+## THIS ARE EXAMPLES OF OTHER DEVICES THAT YOU CAN USE
 # ophyd.Signal:
 # - name: test
 #   value: 50.7
