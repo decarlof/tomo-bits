@@ -10,7 +10,7 @@ from ophyd import Component as Cpt
 from ophyd import EpicsSignal
 from ophyd import EpicsSignalRO
 
-from .tomoscan_helical import TomoScanHelicalDevice
+from tomo_instrument.devices.tomoscan_helical import TomoScanHelicalDevice
 
 
 class TomoScan2BMDevice(TomoScanHelicalDevice):
@@ -24,11 +24,6 @@ class TomoScan2BMDevice(TomoScanHelicalDevice):
     - Data transfer to analysis computer
     - Webcam frame capture
 
-    Parameters
-    ----------
-    mct_prefix : str, optional
-        The EPICS PV prefix for mctOptics. If not provided, will be
-        read from the MctOpticsPVPrefix PV.
     """
 
     # mctOptics camera selection
