@@ -5,7 +5,10 @@ tomography scanning functionality using the ophyd/Bluesky framework.
 """
 
 
-from ophyd import Device, Component as Cpt, EpicsSignal, EpicsSignalRO, EpicsMotor
+from ophyd import Component as Cpt
+from ophyd import Device
+from ophyd import EpicsSignal
+from ophyd import EpicsSignalRO
 
 
 class TomoScanDevice(Device):
