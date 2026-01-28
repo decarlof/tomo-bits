@@ -4,41 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`tomo-bits` is a Bluesky instrument package for tomography data acquisition at APS (Advanced Photon Source). It provides a model implementation of a Bluesky Data Acquisition Instrument that can run in console, notebook, and queueserver modes. The package is built on the `apsbits` framework and provides tomography-specific devices, plans, and callbacks.
+This repository (`tomo-bits`) contains a Bluesky-based data acquisition instrument for tomography scanning at APS (Advanced Photon Source) beamlines. It provides both a generic tomography framework (`tomo_instrument`) and a beamline-specific implementation for 2-BM (`tomo_2bm`).
 
-## Development Environment Setup
+## Development Setup
+
+### Initial Installation
 
 ```bash
 export ENV_NAME=tomo_bits
 conda create -y -n $ENV_NAME python=3.11 pyepics
 conda activate $ENV_NAME
-pip install -e ."[all]"
+pip install -e ".[all]"
 ```
 
-## Essential Commands
-
 ### Testing
+
 ```bash
 # Run all tests
 pytest -vvv --lf ./src
 
-# Run tests with coverage
-pytest -vvv --cov=tomo_instrument ./src
+# Run tests for a specific module
+pytest -vvv ./src/tomo_2bm/
 ```
 
 ### Code Quality
-```bash
-# Run linting and formatting (via pre-commit)
-pre-commit run --all-files
 
-# Manual formatting with ruff
+```bash
+# Format code (line length: 88 for ruff, 115 for black)
 ruff format .
 
-# Manual linting with ruff
+# Lint code
 ruff check .
+
+# Type checking
+mypy src/
 ```
 
 ### Documentation
+
 ```bash
 # Build documentation (requires pandoc: conda install conda-forge::pandoc)
 make -C docs clean html
@@ -47,124 +50,151 @@ make -C docs clean html
 BROWSER ./docs/build/html/index.html &
 ```
 
-### Running the Instrument
+## Architecture
 
-#### IPython Console
-```python
-ipython
-# Inside IPython:
-from tomo_instrument.startup import *
+### Package Structure
+
+The codebase is organized into two main packages:
+
+1. **`tomo_instrument`** - Generic tomography framework providing base classes and plans
+2. **`tomo_2bm`** - Beamline-specific implementation for APS sector 2-BM
+
+### Device Inheritance Hierarchy
+
+The tomoscan devices follow a clear inheritance chain that adds capabilities at each level:
+
+```
+TomoScanDevice (base)
+  └── TomoScanPSODevice (adds Aerotech PSO fly-scan triggering)
+      └── TomoScanHelicalDevice (adds helical vertical motion)
+          └── TomoScan2BMDevice (adds 2-BM beamline specifics)
 ```
 
-#### QueueServer
+- **TomoScanDevice** (`tomo_instrument/devices/tomoscan_base.py`): Core tomography scanning with EPICS PVs for rotation, dark/flat fields, file I/O, and shutter control
+- **TomoScanPSODevice** (`tomo_instrument/devices/tomoscan_pso.py`): Adds Position Synchronized Output (PSO) for continuous fly-scan acquisition
+- **TomoScanHelicalDevice** (`tomo_instrument/devices/tomoscan_helical.py`): Adds helical scanning where sample moves vertically during rotation
+- **TomoScan2BMDevice** (`tomo_2bm/devices/tomoscan_2bm.py`): Adds dual camera support (mctOptics), front-end shutters, and data transfer features
+
+### Startup Sequence
+
+The instrument initialization follows a specific order (see `tomo_2bm/startup.py`):
+
+1. Load configuration from `configs/iconfig.yml`
+2. Initialize instrument registry using apsbits (`init_instrument`)
+3. Register Bluesky magics for IPython
+4. Initialize Bluesky components: BEC (best-effort callback), catalog, RunEngine
+5. Optional: Initialize NeXus/SPEC file writers if enabled
+6. Import Bluesky plans (different imports for queueserver vs console)
+7. Create devices from `configs/devices.yml` using apsbits device manager
+8. Setup baseline stream for devices with "baseline" label
+9. Import beamline-specific plans
+
+### Configuration System
+
+Configuration is managed through YAML files in `configs/`:
+
+- **`iconfig.yml`**: Main instrument configuration (RunEngine metadata, databroker, file formats, EPICS timeouts)
+- **`devices.yml`**: Device definitions using Guarneri-style YAML format (device class, name, prefix, labels)
+- **`devices_aps_only.yml`**: Additional devices only loaded when on APS subnet
+
+Devices are created using apsbits' `make_devices()` function which parses the YAML and instantiates ophyd devices.
+
+### Bluesky Plans
+
+Tomography plans are in `tomo_instrument/plans/tomoscan_plans.py`:
+
+- **`tomo_fly_scan()`**: Complete tomo scan with dark/flat fields
+- **`tomo_step_scan()`**: Step-scan mode variant
+- **`tomo_multi_sample_scan()`**: Scan multiple XY positions
+- **`tomo_grid_scan()`**: Rectangular grid of positions
+- **`tomo_time_series()`**: Time-series scans with delay
+- **`tomo_dark_flat_only()`**: Calibration-only (no projections)
+- **`tomo_scan_with_shutter_control()`**: Explicit shutter control
+- **`tomo_configuration_scan()`**: Load scan parameters from JSON file
+
+All plans follow standard Bluesky protocols: stage/unstage devices, open/close runs, and use `bps.trigger()` for scan execution.
+
+## Running the Instrument
+
+### IPython Console
+
+```python
+# Start IPython and run:
+from tomo_2bm.startup import *
+
+# Run demo plans
+RE(sim_print_plan())
+RE(sim_count_plan())
+RE(sim_rel_scan_plan())
+
+# Run tomography scan
+RE(tomo_fly_scan(tomoscan, md={'sample': 'test_sample'}))
+```
+
+### Jupyter Notebook
+
+```python
+from tomo_2bm.startup import *
+# Then use RE() to run plans as above
+```
+
+### Queueserver
+
+The queueserver allows remote queue management of the RunEngine:
+
 ```bash
-# Start/restart the queueserver
+# Start/restart queueserver host
 ./qserver/qs_host.sh restart
+
+# Check status
+./qserver/qs_host.sh status
 
 # Launch GUI client
 queue-monitor &
-
-# Run directly (console mode)
-cd ./qserver
-start-re-manager --config=./qs-config.yml
 ```
 
-## Architecture
+The queueserver host script (`qserver/qs_host.sh`) supports: `start`, `stop`, `restart`, `status`, `checkup`, `console`, `run`.
 
-### Core Structure
+Configuration: `qserver/qs-config.yml` (see Bluesky queueserver docs for details)
 
-The package follows the apsbits instrument pattern with these key components:
+## Development Notes
 
-1. **Startup System (`startup.py`)**: Central initialization that:
-   - Loads configuration from `configs/iconfig.yml`
-   - Initializes core Bluesky components (RunEngine, BestEffortCallback, Catalog)
-   - Conditionally imports callbacks (NeXus, SPEC writers)
-   - Creates ophyd devices from YAML configs
-   - Sets up different import patterns for queueserver vs. interactive modes
+### Apsbits Dependency
 
-2. **Configuration Cascade**:
-   - `configs/iconfig.yml`: Main instrument configuration
-   - `configs/devices.yml`: Device definitions (loaded for all environments)
-   - `configs/devices_aps_only.yml`: APS-specific devices (loaded only on APS subnet)
+This package heavily uses `apsbits` for:
+- Core initialization functions (`init_RE`, `init_instrument`, `init_catalog`, `init_bec_peaks`)
+- Device creation and management (`make_devices`)
+- Configuration loading (`load_config`)
+- Utility functions (`register_bluesky_magics`, `running_in_queueserver`, `setup_baseline_stream`)
 
-3. **TomoScan Device Hierarchy**:
-   - `TomoScanDevice` (base): Core EPICS PV interface for tomography scanning
-   - `TomoScanPSODevice`: Adds PSO (Position Synchronized Output) fly-scan capability
-   - `TomoScanHelicalDevice`: Adds helical scan support
-   - `TomoScan2BMDevice`: Beamline-specific (2-BM) with dual cameras, shutters, data transfer
+### Working with Devices
 
-### Key Patterns
+When adding or modifying devices:
+1. Define ophyd Device classes in `tomo_instrument/devices/` (generic) or `tomo_2bm/devices/` (beamline-specific)
+2. Add device instantiation to `configs/devices.yml` using the format: class path, name, prefix, labels
+3. Labels control behavior: "baseline" adds to baseline stream, "detectors" marks as detector, etc.
+4. Use `kind` parameter on Components: "config" (saved once), "normal" (read each scan), "omitted" (not read)
 
-**Device Creation**: Uses `apsbits.core.instrument_init.make_devices()` to dynamically create ophyd devices from YAML files. This returns a plan that creates and registers devices.
+### EPICS PV Naming
 
-**Conditional Imports**: Different import strategies for queueserver vs. interactive:
-- QueueServer: Imports standard Bluesky plans by `*` to make them available
-- Interactive: Uses conventional prefixes (`bp` for plans, `bps` for stubs, `*` for apstools)
+The TomoScan IOC PVs follow the pattern: `{prefix}{PVName}` where prefix is set in devices.yml (e.g., "2bm:Tomoscan:"). The base class defines standard PV suffixes like "RotationStart", "NumAngles", "ScanStatus", etc.
 
-**Callback System**: Data file writers (NeXus, SPEC) are conditionally enabled based on `iconfig.yml` settings and initialized with the RunEngine.
+### Testing Approach
 
-### TomoScan Plans Architecture
-
-The `plans/tomoscan_plans.py` module provides Bluesky generator functions for tomography:
-- Plans use `@bpp.stage_decorator` and `@bpp.run_decorator` for proper Bluesky protocol
-- The device's `trigger()` method handles the complete scan sequence
-- Plans include: basic scans, multi-sample, grid scans, time series, calibration
-
-### Module Organization
-
-```
-src/tomo_instrument/
-├── startup.py           # Main entry point for all session types
-├── configs/             # YAML configuration files
-├── devices/             # Ophyd device definitions
-│   ├── tomoscan_base.py     # Base tomoscan ophyd Device
-│   ├── tomoscan_pso.py      # PSO fly-scan extension
-│   ├── tomoscan_helical.py  # Helical scan support
-│   ├── tomoscan_2bm.py      # 2-BM beamline-specific
-│   └── mct_optics.py        # Camera optics devices
-├── plans/               # Bluesky plans
-│   ├── tomoscan_plans.py    # Tomography scan plans
-│   ├── sim_plans.py         # Simulation/test plans
-│   └── dm_plans.py          # APS Data Management integration
-├── callbacks/           # Data file writers
-│   ├── nexus_data_file_writer.py
-│   └── spec_data_file_writer.py
-├── suspenders/          # Beam/shutter suspenders
-└── utils/               # Helper utilities
-```
+Tests should be placed in the same directory as the module being tested with a `test_` prefix. The pytest configuration uses `--import-mode=importlib` for proper module imports.
 
 ## Code Style
 
-- **Python Version**: 3.11+
-- **Line Length**: 88 characters (ruff), 115 for black fallback
-- **Import Style**: Force single-line imports (`from foo import bar`, not `from foo import (bar, baz)`)
-- **Docstrings**: Required for all public modules, classes, methods, and functions (D100-D107 enforced)
-- **Quote Style**: Double quotes for strings
+- Line length: 88 characters (ruff), 115 for black
+- Use ruff for linting and formatting
+- Import style: Single-line imports enforced by ruff (`force-single-line = true`)
+- Python target: 3.11+
+- Docstrings required for all public modules, classes, methods, and functions (D100-D107)
 
-## Testing Notes
+## Common Pitfalls
 
-- Tests use `pytest` with `--import-mode=importlib`
-- Tests run in the `src/` directory
-- `--lf` flag runs last-failed tests first
-- Deprecation warnings are filtered in test configuration
-
-## Important Implementation Details
-
-1. **Environment Detection**: Code checks `running_in_queueserver()` and `host_on_aps_subnet()` to adapt behavior
-
-2. **Ophyd Control Layer**: Configured via `iconfig.yml` (PyEpics or caproto), defaults to PyEpics
-
-3. **Metadata Autosave**: RunEngine metadata is autosaved to `.re_md_dict.yml`
-
-4. **APS Data Management**: Integration via `dm_plans.py` for workflow submission and processing job management
-
-5. **Device Registry**: Uses `apsbits.core.instrument_init.oregistry` which is cleared before device creation in startup
-
-6. **QueueServer Files**: The queueserver writes runtime files to `qserver/` directory - this should NOT be moved into the package as it may be in a read-only location
-
-## Development Workflow
-
-1. When adding new devices: Update `configs/devices.yml` or create new ophyd Device classes in `devices/`
-2. When adding new plans: Add to appropriate module in `plans/` and export in `plans/__init__.py`
-3. When modifying configuration: Edit `configs/iconfig.yml` and restart the session/queueserver
-4. The package depends on `apsbits` as its core framework - see apsbits documentation for device creation patterns
+1. **Import order in startup.py**: Plans and device-specific imports must come AFTER RunEngine initialization
+2. **Device labels**: Labels in devices.yml control automatic registration (baseline, detectors, etc.)
+3. **Queueserver imports**: Uses different import strategy (star imports) vs console sessions (prefixed imports: bp, bps)
+4. **File paths**: qserver directory should NOT be inside the installed package (may be read-only)
+5. **EPICS timeouts**: Configured in iconfig.yml under OPHYD.TIMEOUTS
